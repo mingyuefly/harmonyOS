@@ -1,0 +1,6 @@
+<div class="container">
+    <text class="title">
+        {{ title }}
+    </text>
+    <input class="btn" type="button" value="Back" onclick="onClick"></input>
+</div>

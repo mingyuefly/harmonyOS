@@ -1,0 +1,8 @@
+<div class="container">
+    <text class="title">
+        {{ $t('strings.hello') }} {{ title }}
+    </text>
+    <input class="btn" type="button" value="Next" onclick="onClick">
+        
+    </input>
+</div>
