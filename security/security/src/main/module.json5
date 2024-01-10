@@ -1,0 +1,36 @@
+{
+  "module": {
+    "name": "security",
+    "type": "entry",
+    "description": "$string:module_desc",
+    "mainElement": "SecurityAbility",
+    "deviceTypes": [
+      "phone"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false,
+    "pages": "$profile:main_pages",
+    "abilities": [
+      {
+        "name": "SecurityAbility",
+        "srcEntry": "./ets/securityability/SecurityAbility.ets",
+        "description": "$string:SecurityAbility_desc",
+        "icon": "$media:icon",
+        "label": "$string:SecurityAbility_label",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background",
+        "exported": true,
+        "skills": [
+          {
+            "entities": [
+              "entity.system.home"
+            ],
+            "actions": [
+              "action.system.home"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
