@@ -1,5 +1,6 @@
 import cryptoFramework from '@ohos.security.cryptoFramework';
 import { BusinessError } from '@ohos.base';
+// import buffer from '@ohos.buffer';
 
 export class AES {
   genGcmParamsSpec() {
@@ -37,6 +38,22 @@ export class AES {
     return cbcParamsSpec;
   }
 
+  concatUint8Array(arr1: Uint8Array, arr2: Uint8Array) {
+    let arr = new Uint8Array(arr1.length + arr2.length);
+    for (let i = 0; i < arr1.length; i++) {
+      arr[i] = arr1[i];
+    }
+    for (let i = arr1.length; i < arr1.length + arr2.length; i++) {
+      arr[i] = arr2[i - arr1.length];
+    }
+    return arr;
+  }
+
+  // stringToUint8ArrayByUTF8(str: string) {
+  //   let str1 = '\u00bd + \u00bc = \u00be';
+  //   console.log(`${str1}: ${str1.length} characters, ${buffer.byteLength(str1, 'utf-8')} bytes`);
+  // }
+
   stringToUint8Array(str: string) {
     let arr = new Uint8Array(str.length);
     for (let i = 0, j = str.length; i < j; ++i) {
@@ -45,12 +62,76 @@ export class AES {
     return arr;
   }
 
+  // uint8ArrayToString(array: Uint8Array) {
+  //   let arrayString = '';
+  //   for (let i = 0; i < array.length; i++) {
+  //     arrayString += String.fromCharCode(array[i]);
+  //   }
+  //   return arrayString;
+  // }
+
   uint8ArrayToString(array: Uint8Array) {
     let arrayString = '';
-    for (let i = 0; i < array.length; i++) {
-      arrayString += String.fromCharCode(array[i]);
+    let bytesArray: Array<number> = new Array(array.length)
+    for (let i = 0; i < bytesArray.length; i++) {
+      bytesArray[i] = array[i]
     }
+    arrayString = this.byteToString(bytesArray)
     return arrayString;
+  }
+
+  stringToBytes(str: String): Array<number> {
+    let bytes: Array<number> = new Array();
+    let c: number;
+    let len = str.length;
+    for (let i = 0; i < len; i++) {
+      c = str.charCodeAt(i);
+      if (c >= 0x010000 && c <= 0x10FFFF) {
+        bytes.push(((c >> 18) & 0x07) | 0xF0);
+        bytes.push(((c >> 12) & 0x3F) | 0x80);
+        bytes.push(((c >> 6) & 0x3F) | 0x80);
+        bytes.push((c & 0x3F) | 0x80);
+      } else if (c >= 0x000800 && c <= 0x00FFFF) {
+        bytes.push(((c >> 12) & 0x0F) | 0xE0);
+        bytes.push(((c >> 6) & 0x3F) | 0x80);
+        bytes.push((c & 0x3F) | 0x80);
+      } else if (c >= 0x000080 && c <= 0x0007FF) {
+        bytes.push(((c >> 6) & 0x1F) | 0xC0);
+        bytes.push((c & 0x3F) | 0x80);
+      } else {
+        bytes.push(c & 0xFF);
+      }
+    }
+    return bytes;
+  }
+
+  stringToBytesUintArray(str: String): Uint8Array {
+    let bytes: Array<number> = this.stringToBytes(str)
+    let arr: Uint8Array = new Uint8Array(bytes.length)
+    for (let i = 0; i < bytes.length; i++) {
+      arr[i] = bytes[i]
+    }
+    return arr;
+  }
+
+  byteToString(byte: Array<number>): string {
+    let str: string = '', _arr: Array<number> = byte;
+    for (let i = 0; i < _arr.length; i++) {
+      let one = _arr[i].toString(2),
+        v = one.match(/^1+?(?=0)/);
+      if (v && one.length == 8) {
+        let bytesLength = v[0].length;
+        let store = _arr[i].toString(2).slice(7 - bytesLength);
+        for (let st = 1; st < bytesLength; st++) {
+          store += _arr[st + i].toString(2).slice(2);
+        }
+        str += String.fromCharCode(parseInt(store, 2));
+        i += bytesLength - 1;
+      } else {
+        str += String.fromCharCode(_arr[i]);
+      }
+    }
+    return str;
   }
 
   aesEncrypt(message: string) {
@@ -59,15 +140,16 @@ export class AES {
     let symKeyGenerator = cryptoFramework.createSymKeyGenerator(symAlgName);
     console.info(`symKeyGenerator algName: ${symKeyGenerator.algName}`);
     // Generate GCM parameter specifications.
-    let globalGcmParams = this.genGcmParamsSpec();
-    // let globalGcmParams = this.genCBCParamsSpec();
+    // let globalGcmParams = this.genGcmParamsSpec();
+    let globalGcmParams = this.genCBCParamsSpec();
     // Create a Cipher instance.
-    // let cipherAlgName = 'AES128|CBC|PKCS5';
-    let cipherAlgName = 'AES128|GCM|PKCS7';
+    let cipherAlgName = 'AES128|CBC|PKCS5';
+    // let cipherAlgName = 'AES128|GCM|PKCS7';
     let globalCipher = cryptoFramework.createCipher(cipherAlgName);
     console.info(`cipher algName: ${globalCipher.algName}`);
     // Use the key generator to randomly generate a 128-bit symmetric key.
     let globalCipherText: cryptoFramework.DataBlob;
+    let globalCipherData: Uint8Array = new Uint8Array();
     let globalKey: cryptoFramework.SymKey;
     let promiseSymKey = symKeyGenerator.generateSymKey();
     promiseSymKey.then(key => {
@@ -79,22 +161,95 @@ export class AES {
       return globalCipher.init(mode, globalKey, globalGcmParams);
     })
       .then(() => {
-        let plainText: cryptoFramework.DataBlob = { data: this.stringToUint8Array('this is test!') };
+        // let plainText: cryptoFramework.DataBlob = { data: this.stringToUint8Array(message) };
+        let plainText: cryptoFramework.DataBlob = { data: this.stringToBytesUintArray(message) };
+        console.log(`plainText:${plainText.data.toString()}`)
+        return globalCipher.doFinal(plainText);
+      })
+      .then(finalOutput => {
+        console.info(`doFinal cipher success.`);
+        globalCipherText = finalOutput;
+        // console.log(`doFinal output:${globalCipherText.data.toString()}`);
+        if (globalCipherText != null) {
+          console.log(`Finalize output:${globalCipherText.data.toString()}`);
+        }
+        let mode = cryptoFramework.CryptoMode.DECRYPT_MODE;
+        return globalCipher.init(mode, globalKey, globalGcmParams);
+      })
+      .then(() => {
+        return globalCipher.doFinal(globalCipherText); // doFinal
+      })
+      .then(finalOutput => {
+        console.info(`decrypt cipher success.`);
+        console.info('decrypt plainText: ' + this.uint8ArrayToString(finalOutput.data));
+        // console.info('decrypt plainText: ' + this.byteToString(finalOutput.data));
+      })
+      .catch((error: BusinessError) => {
+        console.error(`catch error, ${error.code}, ${error.message}`);
+      })
+  }
+
+  aesEncryptB(message: string) {
+    console.log(message)
+    let symAlgName = 'AES128';
+    let symKeyGenerator = cryptoFramework.createSymKeyGenerator(symAlgName);
+    console.info(`symKeyGenerator algName: ${symKeyGenerator.algName}`);
+    // Generate GCM parameter specifications.
+    // let globalGcmParams = this.genGcmParamsSpec();
+    let globalGcmParams = this.genCBCParamsSpec();
+    // Create a Cipher instance.
+    let cipherAlgName = 'AES128|CBC|PKCS5';
+    // let cipherAlgName = 'AES128|GCM|PKCS7';
+    let globalCipher = cryptoFramework.createCipher(cipherAlgName);
+    console.info(`cipher algName: ${globalCipher.algName}`);
+    // Use the key generator to randomly generate a 128-bit symmetric key.
+    let globalCipherText: cryptoFramework.DataBlob;
+    let globalCipherData: Uint8Array = new Uint8Array();
+    let globalKey: cryptoFramework.SymKey;
+    let promiseSymKey = symKeyGenerator.generateSymKey();
+    promiseSymKey.then(key => {
+      // Initialize the Cipher instance and start encryption.
+      globalKey = key;
+      console.log(`globalKey:${globalKey.algName}`);
+      console.log(`globalKey:${globalKey.getEncoded().data.toString()}`);
+      let mode = cryptoFramework.CryptoMode.ENCRYPT_MODE;
+      return globalCipher.init(mode, globalKey, globalGcmParams);
+    })
+      .then(() => {
+        // let plainText: cryptoFramework.DataBlob = { data: this.stringToUint8Array('this is test!') };
+        let plainText: cryptoFramework.DataBlob = { data: this.stringToUint8Array(message) };
         console.log(`plainText:${plainText.data.toString()}`)
         return globalCipher.update(plainText);
       })
       .then((updateOutput: cryptoFramework.DataBlob): Promise<cryptoFramework.DataBlob> => {
-        globalCipherText = updateOutput;
-        console.log(`update output:${globalCipherText.data.toString()}`);
-        return globalCipher.doFinal(null);
+        console.info(`Update cipher success.`);
+        if (updateOutput != null) {
+          if (globalCipherData.length > 0) {
+            let tmpData = this.concatUint8Array(globalCipherData, updateOutput.data);
+            globalCipherText.data = tmpData;
+          } else {
+            globalCipherText = updateOutput;
+          }
+
+          // globalCipherText = updateOutput;
+          console.log(`update output:${globalCipherText.data.toString()}`);
+          return globalCipher.doFinal(null);
+        }
+        return globalCipher.doFinal(updateOutput);
       })
-        .then(tag => {
-          // In GCM mode, the encrypted authentication information needs to be obtained from the output of doFinal() and passed in globalGcmParams of init() in decryption.
-          globalGcmParams.authTag = tag;
-          return;
-        })
-      .then(() => {
+
+        // .then(tag => { // GCM
+        //   // In GCM mode, the encrypted authentication information needs to be obtained from the output of doFinal() and passed in globalGcmParams of init() in decryption.
+        //   globalGcmParams.authTag = tag;
+        //   return;
+        // })
+      .then((finalOutput) => {
         // Initialize the Cipher instance and start decryption.
+        console.info(`Finalize cipher success`);
+        globalCipherText = finalOutput;
+        if (globalCipherText != null) {
+          console.log(`Finalize output:${globalCipherText.data.toString()}`);
+        }
         let mode = cryptoFramework.CryptoMode.DECRYPT_MODE;
         return globalCipher.init(mode, globalKey, globalGcmParams);
       })
@@ -102,12 +257,17 @@ export class AES {
         return globalCipher.update(globalCipherText); // update
       })
       .then((updateOutput: cryptoFramework.DataBlob): Promise<cryptoFramework.DataBlob> => {
-        console.info('decrypt plainText: ' + this.uint8ArrayToString(updateOutput.data));
-        return globalCipher.doFinal(null);
+        if (updateOutput != null) {
+          console.info('decrypt plainText: ' + this.uint8ArrayToString(updateOutput.data));
+          return globalCipher.doFinal(null);
+        }
+        return globalCipher.doFinal(updateOutput);
       })
       .then(finalOutput => {
         if (finalOutput == null) { // Check whether the result is null before using finalOutput.data.
           console.info('GCM finalOutput is null');
+        } else {
+          console.info('decrypt plainText: ' + this.uint8ArrayToString(finalOutput.data));
         }
       })
       .catch((error: BusinessError) => {
