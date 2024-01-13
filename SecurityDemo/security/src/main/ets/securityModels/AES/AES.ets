@@ -1,41 +1,24 @@
 import cryptoFramework from '@ohos.security.cryptoFramework';
 import { BusinessError } from '@ohos.base';
+
 // import buffer from '@ohos.buffer';
 
 export class AES {
-  genGcmParamsSpec() {
-    let arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 12 bytes
-    let dataIv = new Uint8Array(arr);
-    let ivBlob: cryptoFramework.DataBlob = { data: dataIv };
 
-    arr = [0, 0, 0, 0, 0, 0, 0, 0]; // 8 bytes
-    let dataAad = new Uint8Array(arr);
-    let aadBlob: cryptoFramework.DataBlob = { data: dataAad };
-
-    arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16 bytes
-    let dataTag = new Uint8Array(arr);
-    let tagBlob: cryptoFramework.DataBlob = {
-      data: dataTag
-    }; // The GCM authTag is obtained by doFinal() in encryption and passed in params of init() in decryption.
-
-    let gcmParamsSpec: cryptoFramework.GcmParamsSpec = {
-      iv: ivBlob,
-      aad: aadBlob,
-      authTag: tagBlob,
-      algName: "GcmParamsSpec"
-    };
-    return gcmParamsSpec;
+  createAESKey(): Uint8Array {
+    return this.getRandomUin8Array(16)
   }
 
-  genCBCParamsSpec() {
-    let arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16 bytes
-    let dataIv = new Uint8Array(arr);
-    let ivBlob: cryptoFramework.DataBlob = { data: dataIv };
-    let cbcParamsSpec: cryptoFramework.IvParamsSpec = {
-      iv: ivBlob,
-      algName: "IvParamsSpec"
+  creatAESIv(): Uint8Array {
+    return this.getRandomUin8Array(16)
+  }
+
+  getRandomUin8Array(length: number) {
+    let arr = new Uint8Array(length)
+    for (let i = 0; i < length; i++) {
+      arr[i] = Math.floor(Math.random() * 10)
     }
-    return cbcParamsSpec;
+    return arr
   }
 
   concatUint8Array(arr1: Uint8Array, arr2: Uint8Array) {
@@ -118,7 +101,7 @@ export class AES {
     let str: string = '', _arr: Array<number> = byte;
     for (let i = 0; i < _arr.length; i++) {
       let one = _arr[i].toString(2),
-        v = one.match(/^1+?(?=0)/);
+        v = one.match("/^1+?(?=0)/");
       if (v && one.length == 8) {
         let bytesLength = v[0].length;
         let store = _arr[i].toString(2).slice(7 - bytesLength);
@@ -132,6 +115,99 @@ export class AES {
       }
     }
     return str;
+  }
+
+  genGcmParamsSpec() {
+    let arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 12 bytes
+    let dataIv = new Uint8Array(arr);
+    let ivBlob: cryptoFramework.DataBlob = { data: dataIv };
+
+    arr = [0, 0, 0, 0, 0, 0, 0, 0]; // 8 bytes
+    let dataAad = new Uint8Array(arr);
+    let aadBlob: cryptoFramework.DataBlob = { data: dataAad };
+
+    arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16 bytes
+    let dataTag = new Uint8Array(arr);
+    let tagBlob: cryptoFramework.DataBlob = {
+      data: dataTag
+    }; // The GCM authTag is obtained by doFinal() in encryption and passed in params of init() in decryption.
+
+    let gcmParamsSpec: cryptoFramework.GcmParamsSpec = {
+      iv: ivBlob,
+      aad: aadBlob,
+      authTag: tagBlob,
+      algName: "GcmParamsSpec"
+    };
+    return gcmParamsSpec;
+  }
+
+  genCBCParamsSpec() {
+    let arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16 bytes
+    let dataIv = new Uint8Array(arr);
+    let ivBlob: cryptoFramework.DataBlob = { data: dataIv };
+    let cbcParamsSpec: cryptoFramework.IvParamsSpec = {
+      iv: ivBlob,
+      algName: "IvParamsSpec"
+    }
+    return cbcParamsSpec;
+  }
+
+  aesEncryptA(message: string, key: Uint8Array) {
+    console.log(message)
+    let symAlgName = 'AES128';
+    let symKeyGenerator = cryptoFramework.createSymKeyGenerator(symAlgName);
+    console.info(`symKeyGenerator algName: ${symKeyGenerator.algName}`);
+    // Generate GCM parameter specifications.
+    // let globalGcmParams = this.genGcmParamsSpec();
+    let globalGcmParams = this.genCBCParamsSpec();
+    // Create a Cipher instance.
+    let cipherAlgName = 'AES128|CBC|PKCS5';
+    // let cipherAlgName = 'AES128|GCM|PKCS7';
+    let globalCipher = cryptoFramework.createCipher(cipherAlgName);
+    console.info(`cipher algName: ${globalCipher.algName}`);
+    // Use the key generator to randomly generate a 128-bit symmetric key.
+    let globalCipherText: cryptoFramework.DataBlob;
+    let globalCipherData: Uint8Array = new Uint8Array();
+    let globalKey: cryptoFramework.SymKey;
+
+    // let promiseSymKey = symKeyGenerator.generateSymKey();
+    let aesKey: cryptoFramework.DataBlob = {data: key}
+    let promiseSymKey = symKeyGenerator.convertKey(aesKey)
+    promiseSymKey.then(key => {
+      // Initialize the Cipher instance and start encryption.
+      globalKey = key;
+      console.log(`globalKey:${globalKey.algName}`);
+      console.log(`globalKey:${globalKey.getEncoded().data.toString()}`);
+      let mode = cryptoFramework.CryptoMode.ENCRYPT_MODE;
+      return globalCipher.init(mode, globalKey, globalGcmParams);
+    })
+      .then(() => {
+        // let plainText: cryptoFramework.DataBlob = { data: this.stringToUint8Array(message) };
+        let plainText: cryptoFramework.DataBlob = { data: this.stringToBytesUintArray(message) };
+        console.log(`plainText:${plainText.data.toString()}`)
+        return globalCipher.doFinal(plainText);
+      })
+      .then(finalOutput => {
+        console.info(`doFinal cipher success.`);
+        globalCipherText = finalOutput;
+        // console.log(`doFinal output:${globalCipherText.data.toString()}`);
+        if (globalCipherText != null) {
+          console.log(`Finalize output:${globalCipherText.data.toString()}`);
+        }
+        let mode = cryptoFramework.CryptoMode.DECRYPT_MODE;
+        return globalCipher.init(mode, globalKey, globalGcmParams);
+      })
+      .then(() => {
+        return globalCipher.doFinal(globalCipherText); // doFinal
+      })
+      .then(finalOutput => {
+        console.info(`decrypt cipher success.`);
+        console.info('decrypt plainText: ' + this.uint8ArrayToString(finalOutput.data));
+        // console.info('decrypt plainText: ' + this.byteToString(finalOutput.data));
+      })
+      .catch((error: BusinessError) => {
+        console.error(`catch error, ${error.code}, ${error.message}`);
+      })
   }
 
   aesEncrypt(message: string) {
