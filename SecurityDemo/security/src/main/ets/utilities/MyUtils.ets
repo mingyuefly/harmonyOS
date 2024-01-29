@@ -1,4 +1,4 @@
-
+import util from '@ohos.util';
 
 export class MyUtils {
  static stringToBytes(str: String): Array<number> {
@@ -30,7 +30,7 @@ export class MyUtils {
     let str: string = '', _arr: Array<number> = byte;
     for (let i = 0; i < _arr.length; i++) {
       let one = _arr[i].toString(2),
-        v = one.match(/^1+?(?=0)/);
+        v = one.match('/^1+?(?=0)/');
       if (v && one.length == 8) {
         let bytesLength = v[0].length;
         let store = _arr[i].toString(2).slice(7 - bytesLength);
@@ -44,5 +44,51 @@ export class MyUtils {
       }
     }
     return str;
+  }
+
+  stringToBytesUint8Array(str: String): Uint8Array {
+    let bytes: Array<number> = MyUtils.stringToBytes(str)
+    let arr: Uint8Array = new Uint8Array(bytes.length)
+    for (let i = 0; i < bytes.length; i++) {
+      arr[i] = bytes[i]
+    }
+    return arr;
+  }
+
+  static stringToUint8Array(str: string) {
+    let arr = new Uint8Array(str.length);
+    for (let i = 0, j = str.length; i < j; ++i) {
+      arr[i] = str.charCodeAt(i);
+    }
+    return arr;
+  }
+
+  static uint8ArrayToString(array: Uint8Array) {
+    let arrayString = '';
+    let bytesArray: Array<number> = new Array(array.length)
+    for (let i = 0; i < bytesArray.length; i++) {
+      bytesArray[i] = array[i]
+    }
+    arrayString = MyUtils.byteToString(bytesArray)
+    return arrayString;
+  }
+
+  static textDecodeByUtf8(arr: Uint8Array): string {
+    let textDecoder = util.TextDecoder.create('utf-8', { ignoreBOM : true });
+    console.log("input num:");
+    // let retStr = textDecoder.decodeWithStream( result , {stream: false});
+    let retStr = textDecoder.decodeWithStream( arr , {stream: false});
+    // console.log("retStr = " + retStr);
+    return retStr
+  }
+
+  static textEncodeByUtf8(str: string): Uint8Array {
+    let textEncoder = new util.TextEncoder();
+    let buffer = new ArrayBuffer(20);
+    let result = new Uint8Array(buffer);
+    // result = textEncoder.encodeInto("\uD800¥¥");
+    result = textEncoder.encodeInto(str)
+    // console.log("encode result = " + result.toString())
+    return result
   }
 }
