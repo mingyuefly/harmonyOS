@@ -1,8 +1,12 @@
 import cryptoFramework from '@ohos.security.cryptoFramework';
 import { BusinessError } from '@ohos.base';
 import util from '@ohos.util';
+import {SM2_Ciphertext} from './SM2Text'
+// import { SM2_SEQUENCE } from './sm2Sequence';
+import {MyUtils} from '../utilities/MyUtils'
 
 let plan = "This is cipher test.";
+let cipherDataBlob: cryptoFramework.DataBlob;
 
 export class SM2 {
   // Convert strings in plaintext into byte streams.
@@ -39,6 +43,66 @@ export class SM2 {
     result = textEncoder.encodeInto(str)
     // console.log("encode result = " + result.toString())
     return result
+  }
+
+  static byteArrayToHex(bytes: Uint8Array): string {
+    let retorno = "";
+    if (bytes !== null && bytes.length !== 0) {
+      for (let i = 0; i < bytes.length; ++i) {
+        let valor = bytes[i];
+        let d1 = valor & 0xf;
+        d1 += d1 < 10 ? 48 : 55;
+        let d2 = (valor & 0xf0) >> 4;
+        d2 += d2 < 10 ? 48 : 55;
+        retorno = retorno + String.fromCharCode(d2) + String.fromCharCode(d1);
+      }
+      return retorno;
+    } else {
+      return retorno;
+    }
+  }
+
+  static hexToByteArray(hexa: string): Uint8Array {
+    if (hexa == null) {
+      throw new Error();
+    }
+    if ((hexa.length % 2) != 0) {
+      throw new Error();
+    }
+    let tamArray = hexa.length / 2;
+    let retorno = new Uint8Array(tamArray);
+    for (let i = 0; i < tamArray; i++) {
+      retorno[i] = SM2.hexToByte(hexa.substring(i * 2, i * 2 + 2));
+    }
+    return retorno;
+  }
+
+  static hexToByte(hexa: string): number {
+    if (hexa === null) {
+      throw new Error();
+    } else if (hexa.length !== 2) {
+      throw new Error();
+    } else {
+      const valor = (SM2.hexDigitValue(hexa.charAt(0)) * 16 + SM2.hexDigitValue(hexa.charAt(1)));
+      return valor;
+    }
+  }
+
+  static hexDigitValue(c: string): number {
+    let retorno = 0;
+    if (c >= '0' && c <= '9') {
+      retorno = c.charCodeAt(0) - 48;
+    } else if (c >= 'A' && c <= 'F') {
+      retorno = c.charCodeAt(0) - 55;
+    } else {
+      if (c < 'a' || c > 'f') {
+        throw new Error();
+      }
+
+      retorno = c.charCodeAt(0) - 87;
+    }
+
+    return retorno;
   }
 
   static genSM2CommonSpec(): cryptoFramework.ECCCommonParamsSpec {
@@ -123,7 +187,7 @@ export class SM2 {
     let prikeyGenerator = cryptoFramework.createAsyKeyGeneratorBySpec(priKeySpec)
     let sm2PriKey = await prikeyGenerator.generatePriKey()
     let priKeyArr: Uint8Array = sm2PriKey.getEncoded().data
-    let priKeyBlob: cryptoFramework.DataBlob = { data: priKeyArr}
+    let priKeyBlob: cryptoFramework.DataBlob = { data: priKeyArr }
 
     // 传入私钥数据生成密钥对象
     let generator = cryptoFramework.createAsyKeyGenerator("SM2_256")
@@ -138,6 +202,182 @@ export class SM2 {
     let decryptStr = SM2.textDecodeByUtf8(globalCipherData.data)
     console.log("rsa decryptStr:" + decryptStr)
     return decryptStr
+  }
+
+  async initImportPuk(): Promise<Uint8Array> {
+
+    let pk: cryptoFramework.Point = {
+      x: BigInt("0x5A033A9DBEF84C0784C897D070E6608C5AEED39B806DF82853D64E2A686A3794"),
+      y: BigInt("0xF9233D20DD878F642D61C2B0344988AE284646226767A1631BBB0DBB6DF40D07")
+    }
+
+    let sk: bigint = BigInt("0x6d562d653d74f41bff9c3f2359e5add416a931c44783b9afdf5c3327121c2266");
+    // 公钥对象参数
+    let pubKey: cryptoFramework.ECCPubKeySpec = {
+      params: SM2.genSM2CommonSpec(),
+      pk: pk,
+      algName: "ECC",
+      specType: cryptoFramework.AsyKeySpecType.PUBLIC_KEY_SPEC
+    }
+    // 私钥对象数据
+    let priKey: cryptoFramework.ECCPriKeySpec = {
+      params: SM2.genSM2CommonSpec(),
+      sk: sk,
+      algName: "ECC",
+      specType: cryptoFramework.AsyKeySpecType.PRIVATE_KEY_SPEC
+    }
+    // 密钥对对象数据
+    let keyPair: cryptoFramework.ECCKeyPairSpec = {
+      params: SM2.genSM2CommonSpec(),
+      sk: sk,
+      pk: pk,
+      algName: 'ECC',
+      specType: cryptoFramework.AsyKeySpecType.KEY_PAIR_SPEC
+    }
+
+    let puk: Uint8Array = new Uint8Array()
+    try {
+      let KeyPairGenerator: cryptoFramework.AsyKeyGeneratorBySpec;
+      KeyPairGenerator = cryptoFramework.createAsyKeyGeneratorBySpec(pubKey);
+      let KeyPair = await KeyPairGenerator.generatePubKey()
+      puk = KeyPair.getEncoded().data
+    } catch (err) {
+      let e: BusinessError = err as BusinessError;
+      console.error(`sync error, ${e.code}, ${e.message}`);
+    }
+    return puk;
+  }
+
+  async convertKeyImportPuk1(pubKey: Uint8Array): Promise<string> {
+    console.log("PubKey code : " + MyUtils.uint8ArrayToHexStr(pubKey));
+    console.log("PubKey data : " + MyUtils.base64Encode(pubKey));
+    console.log("================================================================");
+    let pubKeyBlob: cryptoFramework.DataBlob = { data: pubKey };
+
+    console.log("================================================================");
+
+    let cipher = cryptoFramework.createCipher("SM2_256|SM3");
+    let decoder = cryptoFramework.createCipher("SM2_256|SM3");
+    let generator = cryptoFramework.createAsyKeyGenerator("SM2_256");
+
+
+    let keypair: cryptoFramework.KeyPair = await generator.convertKey(pubKeyBlob, null)
+    console.log("sm2 PubKey base64 : " + MyUtils.base64Encode(keypair.pubKey.getEncoded().data));
+    console.log("sm2 PubKey data : " + MyUtils.uint8ArrayToHexStr(keypair.pubKey.getEncoded().data));
+    console.log("================================================================");
+    await cipher.init(cryptoFramework.CryptoMode.ENCRYPT_MODE, keypair.pubKey, null)
+    let input: cryptoFramework.DataBlob = { data: MyUtils.stringToUint8Array("123456") }
+    let cipherDataBlob: cryptoFramework.DataBlob = await cipher.doFinal(input)
+
+    console.info("SM2 EncryptOutPut base64 is " + MyUtils.base64Encode(cipherDataBlob.data));
+    console.info("SM2 EncryptOutPut hexStr is " + MyUtils.uint8ArrayToHexStr(cipherDataBlob.data));
+    console.info("SM2 EncryptOutPut primal is " + new SM2_Ciphertext().d2i_SM2_Ciphertext(MyUtils.uint8ArrayToHexStr(cipherDataBlob.data)));
+    console.log("================================================================");
+
+    let encryStr = new SM2_Ciphertext().d2i_SM2_Ciphertext(MyUtils.uint8ArrayToHexStr(cipherDataBlob.data))
+
+    return encryStr
+  }
+
+  async convertKeyImportPuk(pubKey: Uint8Array) {
+
+    console.log("PubKey code : " + MyUtils.uint8ArrayToHexStr(pubKey));
+    console.log("PubKey data : " + MyUtils.base64Encode(pubKey));
+    console.log("================================================================");
+    let pubKeyBlob: cryptoFramework.DataBlob = { data: pubKey };
+
+    console.log("================================================================");
+
+    let cipher = cryptoFramework.createCipher("SM2_256|SM3");
+    let decoder = cryptoFramework.createCipher("SM2_256|SM3");
+    let generator = cryptoFramework.createAsyKeyGenerator("SM2_256");
+
+    let input: cryptoFramework.DataBlob
+
+    let keypair: cryptoFramework.KeyPair;
+
+    try {
+      generator.convertKey(pubKeyBlob, null)
+        .then((keyPair) => {
+          keypair = keyPair;
+          console.log("sm2 PubKey base64 : " + MyUtils.base64Encode(keypair.pubKey.getEncoded().data));
+          console.log("sm2 PubKey data : " + MyUtils.uint8ArrayToHexStr(keypair.pubKey.getEncoded().data));
+          // console.log("sm2 PriKey base64 : " + baseUtil.base64Encode(keypair.priKey.getEncoded().data));
+          // console.log("sm2 PriKey data : " + baseUtil.uint8ArrayToHexStr(keypair.priKey.getEncoded().data));
+          console.log("================================================================");
+          return cipher.init(cryptoFramework.CryptoMode.ENCRYPT_MODE, keypair.pubKey, null);
+        })
+        .then(() => {
+          // doFinal
+          input = { data: MyUtils.stringToUint8Array("123456") };
+          return cipher.doFinal(input);
+        })
+        .then(async dataBlob => {
+          // 获取加密数据。
+          console.info("SM2 EncryptOutPut base64 is " + MyUtils.base64Encode(dataBlob.data));
+          console.info("SM2 EncryptOutPut hexStr is " + MyUtils.uint8ArrayToHexStr(dataBlob.data));
+          console.info("SM2 EncryptOutPut primal is " + new SM2_Ciphertext().d2i_SM2_Ciphertext(MyUtils.uint8ArrayToHexStr(dataBlob.data)));
+          console.log("================================================================");
+          cipherDataBlob = dataBlob
+          return dataBlob
+          // return decoder.init(cryptoFramework.CryptoMode.DECRYPT_MODE, keypair.priKey, null)
+        })
+    } catch (err) {
+      let e: BusinessError = err as BusinessError;
+      console.error(`sync error, ${e.code}, ${e.message}`);
+      AlertDialog.show({ message: "Convert keypair fail" });
+    }
+  }
+
+  async convertKeyImportPri(priKey: Uint8Array) {
+    console.log("PubKey code : " + MyUtils.uint8ArrayToHexStr(priKey));
+    console.log("PubKey data : " + MyUtils.base64Encode(priKey));
+    console.log("================================================================");
+    let priKeyBlob: cryptoFramework.DataBlob = { data: priKey };
+
+    console.log("================================================================");
+
+    let cipher = cryptoFramework.createCipher("SM2_256|SM3");
+    let decoder = cryptoFramework.createCipher("SM2_256|SM3");
+    let generator = cryptoFramework.createAsyKeyGenerator("SM2_256");
+
+    let input: cryptoFramework.DataBlob
+
+    let keypair: cryptoFramework.KeyPair;
+
+    try {
+      generator.convertKey(priKeyBlob, null)
+        .then((keyPair) => {
+          keypair = keyPair;
+          console.log("sm2 priKey base64 : " + MyUtils.base64Encode(keypair.priKey.getEncoded().data));
+          console.log("sm2 priKey data : " + MyUtils.uint8ArrayToHexStr(keypair.priKey.getEncoded().data));
+          // console.log("sm2 PriKey base64 : " + baseUtil.base64Encode(keypair.priKey.getEncoded().data));
+          // console.log("sm2 PriKey data : " + baseUtil.uint8ArrayToHexStr(keypair.priKey.getEncoded().data));
+          console.log("================================================================");
+          return decoder.init(cryptoFramework.CryptoMode.DECRYPT_MODE, keypair.priKey, null);
+        })
+        .then(() => {
+          // doFinal
+          // input = { data: MyUtils.stringToUint8Array("123456") };
+          return cipher.doFinal(cipherDataBlob);
+        })
+        .then(async dataBlob => {
+          // 获取解密数据。
+          // console.info("SM2 DecryptOutPut is" + MyUtils.)
+          // console.info("SM2 DecryptOutPut base64 is " + MyUtils.base64Encode(dataBlob.data));
+          // console.info("SM2 DecryptOutPut hexStr is " + MyUtils.uint8ArrayToHexStr(dataBlob.data));
+          // console.info("SM2 DecryptOutPut primal is " + new SM2_Ciphertext().d2i_SM2_Ciphertext(MyUtils.uint8ArrayToHexStr(dataBlob.data)));
+          console.log("================================================================");
+          cipherDataBlob = dataBlob
+          return dataBlob
+          // return decoder.init(cryptoFramework.CryptoMode.DECRYPT_MODE, keypair.priKey, null)
+        })
+    } catch (err) {
+      let e: BusinessError = err as BusinessError;
+      console.error(`sync error, ${e.code}, ${e.message}`);
+      AlertDialog.show({ message: "Convert keypair fail" });
+    }
+
   }
 
   encryptMessagePromiseB(message: string) {

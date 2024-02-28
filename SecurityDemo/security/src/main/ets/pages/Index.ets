@@ -158,9 +158,9 @@ struct Index {
       iv[i] = iv1.charCodeAt(i)
     }
     let awaitEncryptStr = await AES.encrypt256(message, key, iv)
-    console.log("awaitEncryptStr: " + awaitEncryptStr.data.toString())
+    console.log("256 awaitEncryptStr: " + awaitEncryptStr.data.toString())
     let awaitDecryptStr = await AES.decrypt256(awaitEncryptStr, key, iv)
-    console.log("awaitDecryptStr: " + awaitDecryptStr)
+    console.log("256 awaitDecryptStr: " + awaitDecryptStr)
     return awaitEncryptStr.data.toString()
   }
 
@@ -201,9 +201,20 @@ struct Index {
     let sm2PublicKeyStr = "ED6EC968296E41AA61FBFD2ADAE6F0B3DDC21FF3F10DC0F206781B58334870B07121F08027B6D21350104EEFA677DCE58FB0BC5F063037A86D8380DFB66DAD46"
     let awaitEncryptStr = await SM2.encryptByPub(message, sm2PublicKeyStr)
     console.log("sm2 awaitEncryptStr: " + awaitEncryptStr.data.toString())
-    let awaitDecryptStr = await SM2.decryptByPri(awaitEncryptStr, sm2PrivateKeyStr)
+    let dataToHex = SM2.byteArrayToHex(awaitEncryptStr.data)
+    console.log("sm2 hexString: " + dataToHex)
+    let hexToData = SM2.hexToByteArray(dataToHex)
+    let hexToDataBlob: cryptoFramework.DataBlob = {data: hexToData}
+    let awaitDecryptStr = await SM2.decryptByPri(hexToDataBlob, sm2PrivateKeyStr)
     console.log("sm2 awaitDecryptStr1: " + awaitDecryptStr)
     return awaitEncryptStr.data.toString()
+  }
+
+  async sm2Func2() {
+    let puk: Uint8Array | null = await this.sm2Model.initImportPuk()
+    await this.sm2Model.convertKeyImportPuk(puk)
+    let data: string = await this.sm2Model.convertKeyImportPuk1(puk)
+    console.log("sm2Func2:" + data)
   }
 
   async rsaSignFunc(message: string): Promise<string> {
@@ -281,12 +292,12 @@ struct Index {
     // let awaitStr = this.aesModel.encrypt("aes encrypt message", this.aesModel.createAESKey())
     // console.log("awaitStr: " + awaitStr)
     // let aesFuncStr = this.aesFunc("aes encrypt message")
-    // this.aes128Func("aes128 encrypt message，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes")
+    this.aes128Func("aes128 encrypt message，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes")
     // console.log("aesFuncStr:" + aesFuncStr)
     // console.log("aesFuncStr1:" + aesFuncStr1)
     // this.aes256Func("aes256 encrypt message，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes，加密内容aes，加密内容aes加密内容aes，加密内容aes加密内容aes")
-    // this.aes256Func("aes256 encrypt message，加密内容aes，加密内容aes加密内容aes")
-    this.aes256Func(hbmessage)
+    // this.aes256Func("aes256 encrypt message，加密内容aes，加密内容aes加密内容aes array")
+    // this.aes256Func(hbmessage)
     // this.aes256DecryptFunc(hbmessage)
 
     // rsa
@@ -313,6 +324,8 @@ struct Index {
     // this.sm2Model.encryptMessagePromiseA("sm2 message convert")
     // this.sm2Model.encryptMessagePromiseB("sm2 message convert")
     // this.sm2Func1("sm2 message convert pub await 12,加密内容aes加密内容sm2")
+    // this.sm2Func1("297970")
+    this.sm2Func2()
 
     // ECC
     // this.eccModel.convertKeyFunc()

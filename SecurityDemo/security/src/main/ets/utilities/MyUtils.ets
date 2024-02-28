@@ -1,4 +1,7 @@
 import util from '@ohos.util';
+import buffer from '@ohos.buffer';
+
+// import {SM2} from '../securityModels/SM2/SM2'
 
 export class MyUtils {
  static stringToBytes(str: String): Array<number> {
@@ -83,12 +86,24 @@ export class MyUtils {
   }
 
   static textEncodeByUtf8(str: string): Uint8Array {
-    let textEncoder = new util.TextEncoder();
-    let buffer = new ArrayBuffer(20);
-    let result = new Uint8Array(buffer);
+    let textEncoder = new util.TextEncoder()
+    // let buffer = new ArrayBuffer(20);
+    // let result = new Uint8Array(buffer);
     // result = textEncoder.encodeInto("\uD800¥¥");
-    result = textEncoder.encodeInto(str)
+    // result = textEncoder.encodeInto(str)
     // console.log("encode result = " + result.toString())
+    let result = textEncoder.encodeInto(str)
     return result
+  }
+
+  static base64EncodeToString(str: string): string {
+    let strBase64 = buffer.from(str).toString("base64")
+    return strBase64
+  }
+
+  static base64EncodeToUint8Array(str: string): Uint8Array {
+    let baseUtil = new util.Base64Helper
+    let array = MyUtils.stringToUint8Array(str)
+    return baseUtil.encodeSync(array)
   }
 }

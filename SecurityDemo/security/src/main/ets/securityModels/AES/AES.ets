@@ -142,8 +142,9 @@ export class AES {
 
   static textEncodeByUtf8(str: string): Uint8Array {
     let textEncoder = new util.TextEncoder();
-    let buffer = new ArrayBuffer(20);
-    let result = new Uint8Array(buffer);
+    // let buffer = new ArrayBuffer(20);
+    // let result = new Uint8Array(buffer);
+    let result = new Uint8Array();
     // result = textEncoder.encodeInto("\uD800¥¥");
     result = textEncoder.encodeInto(str)
     // console.log("encode result = " + result.toString())
