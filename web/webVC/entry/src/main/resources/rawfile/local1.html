@@ -1,13 +1,40 @@
 <!-- local.html -->
 <!DOCTYPE html>
 <html>
+<head>
+    <style>
+            .button {
+                background-color: #4CAF50;
+                border: 3;
+                color: white;
+                /* padding: 15px 32px; */
+                padding: auto;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 26px;
+                margin: 4px 2px;
+                cursor: pointer;
+                width: 300;
+                height: 140;
+                margin: 100;
+                margin-top: 100;
+            }
+        </style>
+</head>
 <body>
+<button class = "button" onclick="callArkTS()">Click Me!</button>
 <p>Hello World1</p>
 <p id="demo"></p>
 <script>
     function htmlTest() {
         console.info('JavaScript Hello World! ');
         document.getElementById("demo").innerHTML = "javascript";
+    }
+    function callArkTS() {
+        let str = testObjName.test();
+        document.getElementById("demo").innerHTML = str;
+        console.info('ArkTS Hello World! :' + str);
     }
 </script>
 </body>

@@ -63,7 +63,7 @@ struct WebComponent {
           this.webviewController.runJavaScript('htmlTest()');
         })
       // 组件创建时，加载url
-      Web({ src: $rawfile("local.html"), controller: this.webviewController })
+      Web({ src: $rawfile("local1.html"), controller: this.webviewController })
         // 将对象注入到web端
         .javaScriptProxy({
           object: this.testObj,
