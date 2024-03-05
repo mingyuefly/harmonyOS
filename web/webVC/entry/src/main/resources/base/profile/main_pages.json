@@ -3,6 +3,9 @@
     "pages/Index",
     "pages/Second",
     "pages/WebView",
-    "pages/BWebView"
+    "pages/BWebView",
+    "pages/WebMessagePort",
+    "pages/HWebView",
+    "pages/HWebMessagePort"
   ]
 }

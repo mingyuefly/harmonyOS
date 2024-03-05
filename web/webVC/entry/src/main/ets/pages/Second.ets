@@ -51,6 +51,67 @@ struct Second {
             console.info('Succeeded in jumping to the second page.')
           })
         })
+
+        Button() {
+          Text('WEBMESSAGE')
+            .fontSize(30)
+            .fontWeight(FontWeight.Bold)
+        }
+        .type(ButtonType.Capsule)
+        .margin({
+          top : 20
+        })
+        .backgroundColor('#0D9FFB')
+        .width('40%')
+        .height('5%')
+        .onClick(()=>{
+          console.info(`Succeeded in clicking the 'Next' button.`)
+          // 跳转到第二页
+          router.pushUrl({url: 'pages/WebMessagePort'}).then(()=>{
+            console.info('Succeeded in jumping to the second page.')
+          })
+        })
+
+        Button() {
+          Text('HWebView')
+            .fontSize(30)
+            .fontWeight(FontWeight.Bold)
+        }
+        .type(ButtonType.Capsule)
+        .margin({
+          top : 20
+        })
+        .backgroundColor('#0D9FFB')
+        .width('40%')
+        .height('5%')
+        .onClick(()=>{
+          console.info(`Succeeded in clicking the 'Next' button.`)
+          // 跳转到第二页
+          router.pushUrl({url: 'pages/HWebView'}).then(()=>{
+            console.info('Succeeded in jumping to the second page.')
+          })
+        })
+
+        Button() {
+          Text('HWEBMESSAGE')
+            .fontSize(30)
+            .fontWeight(FontWeight.Bold)
+        }
+        .type(ButtonType.Capsule)
+        .margin({
+          top : 20
+        })
+        .backgroundColor('#0D9FFB')
+        .width('40%')
+        .height('5%')
+        .onClick(()=>{
+          console.info(`Succeeded in clicking the 'Next' button.`)
+          // 跳转到第二页
+          router.pushUrl({url: 'pages/HWebMessagePort'}).then(()=>{
+            console.info('Succeeded in jumping to the second page.')
+          })
+        })
+
       }
       .width('100%')
     }

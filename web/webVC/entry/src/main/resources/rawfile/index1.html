@@ -1,0 +1,211 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+            .button1 {
+                background-color: #4CAF50;
+                border: 3;
+                color: white;
+                /* padding: 15px 32px; */
+                padding: auto;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 26px;
+                margin: 4px 2px;
+                cursor: pointer;
+                width: 300;
+                height: 140;
+                margin: 100;
+                margin-top: 100;
+            }
+        </style>
+</head>
+<body>
+<button class = "button1" onclick="callArkTS()">Click Me!</button>
+<button class = "button1" onclick="callArkTSA()">Click Me A!</button>
+<button class = "button1" onclick="callArkTSB()">Click Me B!</button>
+<button class = "button1" onclick="callArkTSC()">Click Me C!</button>
+<button class = "button1" onclick="callArkTSD()">Click Me D!</button>
+<button class = "button1" onclick="callArkTSE()">Click Me E!</button>
+<p id="demo"></p>
+<p id="demo1"></p>
+<p id="demo2"></p>
+<p id="demo3"></p>
+<p id="demo4"></p>
+<p id="demo5"></p>
+<p id="demo6"></p>
+<script>
+
+// common js begin
+
+// window添加message监听
+var h5Port;
+window.addEventListener('message', function (event) {
+    if (event.data === '__init_port__') {
+        if (event.ports[0] !== null) {
+            h5Port = event.ports[0]; // 1. 保存从应用侧发送过来的端口。
+            h5Port.onmessage = function (event) {
+              // 2. 接收ets侧发送过来的消息。
+              var msg = 'Got message from ets:';
+              var result = event.data;
+              if (typeof(result) === 'string') {
+                console.info(`received string message from html5, string is: ${result}`);
+                msg = msg + result;
+                let resultJson = JSON.parse(result)
+                let callId = resultJson['callId']
+                console.log("callId == " + resultJson['callId'])
+                let paramsStr = resultJson['params']
+                let params = JSON.parse(paramsStr)
+                console.log("str1 == " + params['str1'])
+                callback(callId, params)
+              } else if (typeof(result) === 'object') {
+                if (result instanceof ArrayBuffer) {
+                  console.info(`received arraybuffer from html5, length is: ${result.byteLength}`);
+                  msg = msg + 'lenght is ' + result.byteLength;
+                } else {
+                  console.info('not support');
+                }
+              } else {
+                console.info('not support');
+              }
+
+            }
+        }
+    }
+})
+
+// 使用h5Port向应用侧发送消息。
+function PostMsgToEts(data) {
+    if (h5Port) {
+      h5Port.postMessage(data);
+    } else {
+      console.error('h5Port is null, Please initialize first');
+    }
+}
+
+// 和包和前端之间交互
+
+
+    //oc调用js的回调
+    var _hbCallbacks = {}
+    var _callbacks = {}
+    //消息回调id
+    var _hbCbId = 1;
+
+    //ObjC执行完原生方法后回调JS
+    function callback(callbackId, params) {
+        let hbCallback = _hbCallbacks[callbackId]
+        if (typeof hbCallback == 'function') {
+            return hbCallback(params)
+        }
+    }
+
+
+    //JS调用原生方法： name 方法名 param 参数 callback 回调方法
+    function doCall(name, param, callback) {
+        var msg = {};
+        if (arguments.length == 2 && typeof param == 'function') {
+            callback = param;
+            param = null;
+        }
+        if (typeof callback == 'function') {
+            _callbacks[name] = callback;
+            var callbackId = 'hb'+(_hbCbId++)+'cb'+ new Date().getTime();
+            _hbCallbacks[callbackId] = callback;
+            msg['callbackId'] = callbackId;
+        }
+
+        let params = {params: param} 
+        msg['body'] = params
+        let msgJsonStr = JSON.stringify(msg)
+        let str = testObjNameH.onMessage(name, msgJsonStr)
+    }
+
+
+// common js end
+
+
+    function callArkTS() {
+        let str = testObjNameH.getInfoFromNative("get info");
+        document.getElementById("demo").innerHTML = str;
+        console.info('ArkTS Hello World! :' + str);
+    }
+
+    function callArkTSA() {
+        let str = testObjNameH.getInfoFromNativeA("get info A");
+        document.getElementById("demo").innerHTML = str;
+        console.info('ArkTS Hello World! :' + str);
+    }
+
+    function callArkTSB() {
+        let str = testObjNameH.doCall("getInfoFromNativeB", '{"str1": "get info B"}')
+        document.getElementById("demo").innerHTML = str;
+        console.info('ArkTS Hello World! :' + str);
+    }
+
+    function callArkTSC() {
+        let str = testObjNameH.onMessage("getInfoFromNativeC", '{"body":{"params":{"str1": "get info C"}, "callbackId":"getInfoFromNativeC"}}')
+        document.getElementById("demo").innerHTML = str;
+        console.info('ArkTS Hello World! :' + str);
+    }
+
+    function callArkTSD() {
+        _hbCallbacks['getInfoFromNativeD'] = (params) => {
+            // let params = JSON.parse(paramStr)
+            console.info(params['str1']);
+            document.getElementById("demo5").innerHTML = params['str1']
+            return "html test successD"
+        }
+        let str = testObjNameH.onMessage("getInfoFromNativeD", '{"body":{"params":{"str1": "get info D"}, "callbackId":"getInfoFromNativeD"}}')
+        document.getElementById("demo").innerHTML = str;
+        console.info('ArkTS Hello World! :' + str);
+    }
+
+    function callArkTSE() {
+        doCall("getInfoFromNativeE", {"str1": "get info D1", "str2": "get info D2"}, (res) => {
+            let str1 = res['str1']
+            let str2 = res['str2']
+            let str = str1 + "--" + str2
+            console.info(str);
+            document.getElementById("demo5").innerHTML = str2
+            return "html test successE"
+        })
+    }
+
+    function htmlTest() {
+        console.info('JavaScript Hello World! ');
+        document.getElementById("demo1").innerHTML = "javascript";
+        return "html test success"
+    }
+
+    function htmlTestA(str) {
+        console.info(str);
+        document.getElementById("demo2").innerHTML = str
+        return "html test successA"
+    }
+
+    function htmlTestB(str) {
+        console.info(str);
+        document.getElementById("demo3").innerHTML = str
+        return "html test successB"
+    }
+
+    function htmlTestC(str1, str2, str3) {
+        console.info(str1);
+        console.info(str2);
+        console.info(str3);
+        document.getElementById("demo4").innerHTML = str2 + "--" + str1 + "--" + str3
+        return "html test successC"
+    }
+
+    function htmlTestD(str) {
+        console.info(str);
+        document.getElementById("demo5").innerHTML = str
+        return "html test successD"
+    }
+
+</script>
+</body>
+</html>

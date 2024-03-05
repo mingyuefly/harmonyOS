@@ -3,43 +3,37 @@ import business_error from '@ohos.base';
 import uri from '@ohos.uri';
 import router from '@ohos.router'
 // import {WebPageData} from './WebManager'
+import {HMethods} from './HMethods'
+import {HBWKJSRejection_js} from './HWebCommon'
 
-class testClass {
-  constructor() {
-  }
-
-  test(): string {
-    return 'ArkTS Hello World!';
-  }
-}
-
-class HMethods {
-  constructor() {
-
-  }
-
-  getInfoFromNative(str: string): string {
-    console.log(str)
-    return "fromNative"
-  }
-
-  test(): string {
-    console.log(("test call app success"))
-    return 'ArkTS Hello World h!';
-  }
-}
+// class HMethods {
+//   constructor() {
+//
+//   }
+//
+//   getInfoFromNative(str: string): string {
+//     console.log(str)
+//     return "fromNative"
+//   }
+//
+//   test(): string {
+//     console.log(("test call app success"))
+//     return 'ArkTS Hello World!';
+//   }
+// }
 
 @Entry
 @Component
 struct WebComponent {
   webviewController: web_webview.WebviewController = new web_webview.WebviewController();
   @State url: string = ""
-  // @State testObj: testClass = new testClass();
-  @State testObj: testClass = new HMethods();
+  @State testObj: HMethods = new HMethods(this.webviewController);
 
   aboutToAppear(): void {
     // 配置Web开启调试模式
     web_webview.WebviewController.setWebDebuggingAccess(true);
+    // let hsStr = HBWKJSRejection_js()
+    // console.log("hsStr = " + hsStr)
   }
   build() {
     Column() {
@@ -65,29 +59,36 @@ struct WebComponent {
           console.error(`Failed to return to the first page.Code is ${error.code}, message is ${error.message}`)
         }
       })
-      Button('loadUrl')
+      Button('refresh')
         .onClick(() => {
           try {
-            // 点击按钮时，通过loadUrl，跳转到local1.html
-            this.webviewController.loadUrl($rawfile("local1.html"));
+            this.webviewController.refresh();
           } catch (error) {
             let e: business_error.BusinessError = error as business_error.BusinessError;
             console.error(`ErrorCode: ${e.code},  Message: ${e.message}`);
           }
         })
-      Button('runJavaScript')
+      Button('Register JavaScript To Window')
         .onClick(() => {
-          this.webviewController.runJavaScript('htmlTest()');
+          try {
+            this.webviewController.registerJavaScriptProxy(this.testObj, "testObjNameH", ["test", "getInfoFromNative", "getInfoFromNativeA", "doCall"]);
+          } catch (error) {
+            let e: business_error.BusinessError = error as business_error.BusinessError;
+            console.error(`ErrorCode: ${e.code},  Message: ${e.message}`);
+          }
         })
       // 组件创建时，加载url
-      Web({ src: $rawfile("local1.html"), controller: this.webviewController })
+      // Web({ src: $rawfile("index1.html"), controller: this.webviewController })
+      Web({src: $rawfile("index1.html"), controller: this.webviewController })
         // 将对象注入到web端
         .javaScriptProxy({
           object: this.testObj,
-          name: "testObjName",
-          methodList: ["test"],
+          name: "testObjNameH",
+          methodList: ["test", "getInfoFromNative", "getInfoFromNativeA", "doCall", "onMessage"],
           controller: this.webviewController
         })
+
+
 
     }
   }
