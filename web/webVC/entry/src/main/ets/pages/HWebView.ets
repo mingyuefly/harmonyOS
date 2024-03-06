@@ -79,7 +79,7 @@ struct WebComponent {
         })
       // 组件创建时，加载url
       // Web({ src: $rawfile("index1.html"), controller: this.webviewController })
-      Web({src: $rawfile("index1.html"), controller: this.webviewController })
+      Web({src: $rawfile("index3.html"), controller: this.webviewController })
         // 将对象注入到web端
         .javaScriptProxy({
           object: this.testObj,
@@ -87,7 +87,13 @@ struct WebComponent {
           methodList: ["test", "getInfoFromNative", "getInfoFromNativeA", "doCall", "onMessage"],
           controller: this.webviewController
         })
-
+        .onPageBegin((event) => {
+          let jsStr: string = HBWKJSRejection_js()
+          this.webviewController.runJavaScript(jsStr)
+        })
+        .onPageEnd((event) => {
+          this.testObj.addPort()
+        })
 
 
     }

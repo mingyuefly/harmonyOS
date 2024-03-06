@@ -21,7 +21,6 @@ export class HMethods {
 
   /*
    * 添加消息传递端口
-   *
    */
   addPort() {
     try {
@@ -53,10 +52,24 @@ export class HMethods {
   }
 
   /*
-   * 应用侧回调前端侧方法
-   *
+   * 应用侧回调前端侧方法(通过调用runJavaScript方法)
    */
-  callback(callId: string, params: string) {
+  callback(callId: string, params: Object) {
+    try {
+      let msg: Record<string, Object> = {}
+      msg["callbackId"] = callId
+      msg["params"] = params
+      let msgStr = JSON.stringify(msg)
+      // 由于artTS是严格类型检查的，所以用json来做js和native的数据传递
+      let jsStr: string = 'hebaoWkjs.callback('+msgStr+')'
+      this.webviewController.runJavaScript(jsStr)
+        .then((message: string) => {
+          console.log(message)
+        })
+    } catch(error) {
+      let e: business_error.BusinessError = error as business_error.BusinessError;
+      console.error(`ErrorCode: ${e.code},  Message: ${e.message}`);
+    }
 
     // let str: string = "'"
     // str += "callback("
@@ -80,20 +93,25 @@ export class HMethods {
     //     console.error(`catch error, ${error.code}, ${error.message}`);
     //   })
 
+  }
 
+  /*
+   * 应用侧回调前端侧方法(通过调用消息发送方法)
+   */
+  msgCallback(callId: string, params: Object) {
     // 之所以在这里添加ports，是因为要确保加载html页面后才能将ports发送给html页面，而在bulid页面又不支持这个方法的执行
     if (this.ports.length < 2) {
       this.addPort()
     }
     try {
-      let a: Record<string, string> = {}
-      a["callId"] = callId
-      a["params"] = params
-      let strA = JSON.stringify(a)
+      let msg: Record<string, Object> = {}
+      msg["callId"] = callId
+      msg["params"] = params
+      let msgStr = JSON.stringify(msg)
 
       if (this.ports && this.ports[1]) {
         // this.ports[1].postMessageEvent('{"str1": "htmlTestD from native str1"}');
-        this.ports[1].postMessageEvent(strA);
+        this.ports[1].postMessageEvent(msgStr);
       } else {
         console.error(`ports is null, Please initialize first`);
       }
@@ -101,7 +119,6 @@ export class HMethods {
       let e: business_error.BusinessError = error as business_error.BusinessError;
       console.error(`ErrorCode: ${e.code},  Message: ${e.message}`);
     }
-
   }
 
   addMethods() {
@@ -157,25 +174,6 @@ export class HMethods {
         .then((message: string) => {
           console.log(message)
         })
-
-
-
-      // this.webviewController.runJavaScript('htmlTestC("htmlTestC from native","htmlTestC2 from native",'{"str3":"from C JSON"}')')
-      //   .then((message: string) => {
-      //     console.log(message)
-      //   })
-
-
-      // this.webviewController.runJavaScript(str)
-      //   .then((message: string) => {
-      //     console.log(message)
-      //   })
-
-      // this.webviewController.runJavaScript('htmlTestC("htmlTestC from native", "htmlTestC2 from native", "from C JSON")')
-      //   .then((message: string) => {
-      //     console.log(message)
-      //   })
-
       return "fromNativeC"
     })
 
@@ -192,14 +190,17 @@ export class HMethods {
     })
 
     this.messageMethods.set("getInfoFromNativeE", (message: HWebMessage): string => {
-      // 由于artTS是严格类型检查的，所以用json来做js和native的数据传递
-      let params: object = message.params
-      console.log(params["str1"])
-      console.log(params["str2"])
-      this.callback(message.callbackId, '{"str1": "htmlTestE1 from native", "str2": "htmlTestE2 from native"}')
-      return "fromNativeD"
+      let params: object = message.params;
+      console.log(params["str1"]);
+      console.log(params["str2"]);
+      let callbackParams: Record<string, Object> = {};
+      callbackParams["str1"] = "htmlTestE1";
+      callbackParams["str2"] = "htmlTestE2";
+      message.hbCallback(callbackParams)
+      // this.msgCallback(message.callbackId, callbackParams)
+      // this.callback(message.callbackId, callbackParams)
+      return "fromNativeE"
     })
-
   }
 
   getInfoFromNative(str: string): string {
@@ -247,7 +248,7 @@ export class HMethods {
     let body: object = msgJson["body"]
     let params: object = body["params"]
     let callbackId: string = msgJson["callbackId"]
-    let message: HWebMessage = new HWebMessage(name, callbackId, body, params)
+    let message: HWebMessage = new HWebMessage(name, callbackId, body, params, this)
     let func = this.messageMethods.get(name)
     if (func) {
       return func(message)
