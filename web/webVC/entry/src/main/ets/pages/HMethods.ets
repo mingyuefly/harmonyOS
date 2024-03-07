@@ -54,10 +54,11 @@ export class HMethods {
   /*
    * 应用侧回调前端侧方法(通过调用runJavaScript方法)
    */
-  callback(callId: string, params: Object) {
+  callback(callbackId: string, pipe: boolean, params: Object) {
     try {
       let msg: Record<string, Object> = {}
-      msg["callbackId"] = callId
+      msg["callbackId"] = callbackId
+      msg["pipe"] = pipe
       msg["params"] = params
       let msgStr = JSON.stringify(msg)
       // 由于artTS是严格类型检查的，所以用json来做js和native的数据传递
@@ -98,14 +99,15 @@ export class HMethods {
   /*
    * 应用侧回调前端侧方法(通过调用消息发送方法)
    */
-  msgCallback(callId: string, params: Object) {
+  msgCallback(callbackId: string, pipe: boolean, params: Object) {
     // 之所以在这里添加ports，是因为要确保加载html页面后才能将ports发送给html页面，而在bulid页面又不支持这个方法的执行
     if (this.ports.length < 2) {
       this.addPort()
     }
     try {
       let msg: Record<string, Object> = {}
-      msg["callId"] = callId
+      msg["callbackId"] = callbackId
+      msg["pipe"] = pipe
       msg["params"] = params
       let msgStr = JSON.stringify(msg)
 
@@ -178,14 +180,14 @@ export class HMethods {
     })
 
     this.messageMethods.set("getInfoFromNativeD", (message: HWebMessage): string => {
-      // 由于artTS是严格类型检查的，所以用json来做js和native的数据传递
-      let params: object = message.params
-      console.log(params["str1"])
-      this.webviewController.runJavaScript('htmlTest()')
-        .then((message: string) => {
-          console.log(message)
-        })
-      this.callback(message.callbackId, '{"str1": "htmlTestD from native str1"}')
+      let params: object = message.params;
+      console.log(params["str1"]);
+      console.log(params["str2"]);
+      let callbackParams: Record<string, Object> = {};
+      callbackParams["str1"] = "htmlTestD1";
+      callbackParams["str2"] = "htmlTestD2";
+      message.callbackPiping = true
+      message.hbCallback(callbackParams)
       return "fromNativeD"
     })
 
@@ -197,10 +199,29 @@ export class HMethods {
       callbackParams["str1"] = "htmlTestE1";
       callbackParams["str2"] = "htmlTestE2";
       message.hbCallback(callbackParams)
-      // this.msgCallback(message.callbackId, callbackParams)
-      // this.callback(message.callbackId, callbackParams)
       return "fromNativeE"
     })
+  }
+
+  onMessage(name1: string, msg: string): string {
+    // 由于artTS是严格类型检查的，所以用json来做js和native的数据传递
+    let msgJson: object = JSON.parse(msg)
+    let name: string = name1
+    let body: object = msgJson["body"]
+    let params: object = body["params"]
+    let callbackId: string = msgJson["callbackId"]
+    let message: HWebMessage = new HWebMessage(name, callbackId, body, params, this)
+    let func = this.messageMethods.get(name)
+    if (func) {
+      return func(message)
+    } else {
+      console.log(name + "方法不存在")
+      return ""
+    }
+  }
+
+  hblog(msg: string) {
+    console.log(msg)
   }
 
   getInfoFromNative(str: string): string {
@@ -241,22 +262,7 @@ export class HMethods {
     }
   }
 
-  onMessage(name1: string, msg: string): string {
-    // 由于artTS是严格类型检查的，所以用json来做js和native的数据传递
-    let msgJson: object = JSON.parse(msg)
-    let name: string = name1
-    let body: object = msgJson["body"]
-    let params: object = body["params"]
-    let callbackId: string = msgJson["callbackId"]
-    let message: HWebMessage = new HWebMessage(name, callbackId, body, params, this)
-    let func = this.messageMethods.get(name)
-    if (func) {
-      return func(message)
-    } else {
-      console.log(name + "方法不存在")
-      return ""
-    }
-  }
+
 
   test(): string {
     console.log(("test call app success"))

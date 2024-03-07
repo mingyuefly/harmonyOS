@@ -83,13 +83,13 @@ struct WebComponent {
         // 将对象注入到web端
         .javaScriptProxy({
           object: this.testObj,
-          name: "testObjNameH",
-          methodList: ["test", "getInfoFromNative", "getInfoFromNativeA", "doCall", "onMessage"],
+          name: "HWebHandler",
+          methodList: ["test", "getInfoFromNative", "getInfoFromNativeA", "hblog", "onMessage"],
           controller: this.webviewController
         })
         .onPageBegin((event) => {
-          let jsStr: string = HBWKJSRejection_js()
-          this.webviewController.runJavaScript(jsStr)
+          // let jsStr: string = HBWKJSRejection_js()
+          // this.webviewController.runJavaScript(jsStr)
         })
         .onPageEnd((event) => {
           this.testObj.addPort()
