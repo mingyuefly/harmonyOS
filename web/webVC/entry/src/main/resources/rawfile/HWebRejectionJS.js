@@ -49,10 +49,10 @@
         msgCallback: function (callbackId, pip, params) {
             let hbCallback = _hbCallbacks[callbackId];
             if (typeof hbCallback == 'function') {
-                // hblog("已成功回调ID=" + callbackId + ", 传递参数：" + params1);
+                this.hblog("已成功回调ID=" + callbackId + ", 传递参数：" + JSON.stringify(params));
                 hbCallback(params);
             } else {
-                // hblog("未找到回调ID=" + callbackId + ", 传递参数：" + params1);
+                this.hblog("未找到回调ID=" + callbackId + ", 传递参数：" + JSON.stringify(params));
             }
             if (pipe == false) {
                 _hbCallbacks[callbackId] = undefined;
@@ -85,17 +85,13 @@
             msg['body'] = params;
             // 使用json字符串做应用侧和前端侧数据传递
             let msgJsonStr = JSON.stringify(msg);
-            let str = testObjNameH.onMessage(name, msgJsonStr);
+            let str = HWebHandler.onMessage(name, msgJsonStr);
         },
 
-        //打印函数：分别打印到js控制台同时输出到iOS
-        // hblog: function (msg) {
-        //     var c = _wkmsgHandlers.hblog;
-        //     if (c != null) {
-        //         console.log(msg);
-        //         c.postMessage(msg);
-        //     }
-        // }
+        // 打印函数：分别打印到js控制台同时输出到iOS
+        hblog: function (msg) {
+            HWebHandler.hblog(msg);
+        }
 
     }
 

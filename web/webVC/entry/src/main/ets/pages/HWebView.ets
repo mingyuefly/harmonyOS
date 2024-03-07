@@ -5,6 +5,7 @@ import router from '@ohos.router'
 // import {WebPageData} from './WebManager'
 import {HMethods} from './HMethods'
 import {HBWKJSRejection_js} from './HWebCommon'
+import {HWebHandler} from './HWebHandler'
 
 // class HMethods {
 //   constructor() {
@@ -27,7 +28,7 @@ import {HBWKJSRejection_js} from './HWebCommon'
 struct WebComponent {
   webviewController: web_webview.WebviewController = new web_webview.WebviewController();
   @State url: string = ""
-  @State testObj: HMethods = new HMethods(this.webviewController);
+  @State testObj: HWebHandler = new HWebHandler(this.webviewController);
 
   aboutToAppear(): void {
     // 配置Web开启调试模式
@@ -88,8 +89,8 @@ struct WebComponent {
           controller: this.webviewController
         })
         .onPageBegin((event) => {
-          // let jsStr: string = HBWKJSRejection_js()
-          // this.webviewController.runJavaScript(jsStr)
+          let jsStr: string = HBWKJSRejection_js()
+          this.webviewController.runJavaScript(jsStr)
         })
         .onPageEnd((event) => {
           this.testObj.addPort()

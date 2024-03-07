@@ -1,4 +1,4 @@
-import {HMethods} from './HMethods'
+import {HWebHandler} from './HWebHandler'
 
 export class HWebMessage {
   name: string // 应用侧方法名字
@@ -7,8 +7,8 @@ export class HWebMessage {
   params: object // 传给应用侧参数
   hbCallback: (res: Object) => void = (res: Object) => {} // 应用侧执行完前端侧的调用后回调前端侧
   callbackPiping: boolean = false // 回调参数是否保存长连接---默认问答式
-  handler: HMethods
-  constructor(name: string, callbackId: string, body: object, params: object, handler: HMethods) {
+  handler: HWebHandler
+  constructor(name: string, callbackId: string, body: object, params: object, handler: HWebHandler) {
     this.name = name
     this.callbackId = callbackId
     this.body = body
