@@ -241,15 +241,7 @@ export class HMethods {
   //   return "fromNative"
   // }
   //
-  // getInfoFromNativeA(str: string): string {
-  //   console.log(str)
-  //   this.webviewController.runJavaScript('htmlTest()')
-  //     .then((message: string) => {
-  //       console.log(message)
-  //     })
-  //   this.webviewController.runJavaScript('htmlTestA("htmlTestA from native")')
-  //   return "fromNativeA"
-  // }
+
   //
   // getInfoFromNativeB(str: string): string {
   //   console.log(str)

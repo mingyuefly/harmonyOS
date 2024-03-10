@@ -136,4 +136,46 @@ export class HWebHandler {
     console.log(msg)
   }
 
+
+  /**
+   * 测试
+   * @param str
+   * @returns
+   */
+  getInfoFromNativeA(str: string): string {
+    console.log(str)
+    this.webviewController.runJavaScript('htmlTest()')
+      .then((message: string) => {
+        console.log(message)
+      })
+
+    interface User {
+      name: string;
+    }
+    let apple: (User | string) []= ['gfd',{ name : "apple"}]
+    console.log('urlsss: '+JSON.stringify(apple));
+    try {
+      let result = JSON.stringify(apple)
+      let js: string = 'test(' + result + ')'
+      this.webviewController.runJavaScript(
+        js,
+        (error, result) => {
+          if (error) {
+            let e: business_error.BusinessError = error as business_error.BusinessError;
+            console.error(`run JavaScript error, ErrorCode: ${e.code}, Message: ${e.message}`);
+            return;
+          }
+          if (result) {
+            // this.webResult = result
+            console.info(`The test() return value is: ${result}`)
+          }
+        });
+    } catch (error) {
+      let e: business_error.BusinessError = error as business_error.BusinessError;
+      console.error(`ErrorCode: ${e.code}, Message: ${e.message}`);
+    }
+    // this.webviewController.runJavaScript('htmlTestA("htmlTestA from native")')
+    return "fromNativeA"
+  }
+
 }
