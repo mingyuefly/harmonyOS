@@ -93,7 +93,7 @@ struct WebComponent {
           this.webviewController.runJavaScript(jsStr)
         })
         .onPageEnd((event) => {
-          this.testObj.addPort()
+          // this.testObj.addPort()
         })
 
 

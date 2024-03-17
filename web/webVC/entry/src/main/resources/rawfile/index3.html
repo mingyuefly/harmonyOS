@@ -23,12 +23,13 @@
         </style>
 </head>
 <body>
-<button class = "button1" onclick="callArkTS()">Click Me!</button>
+<!-- <button class = "button1" onclick="callArkTS()">Click Me!</button>
 <button class = "button1" onclick="callArkTSA()">Click Me A!</button>
 <button class = "button1" onclick="callArkTSB()">Click Me B!</button>
-<button class = "button1" onclick="callArkTSC()">Click Me C!</button>
+<button class = "button1" onclick="callArkTSC()">Click Me C!</button> -->
 <button class = "button1" onclick="callArkTSD()">Click Me D!</button>
 <button class = "button1" onclick="callArkTSE()">Click Me E!</button>
+<button class = "button1" onclick="camara()">camara</button>
 <p id="demo"></p>
 <p id="demo1"></p>
 <p id="demo2"></p>
@@ -36,11 +37,12 @@
 <p id="demo4"></p>
 <p id="demo5"></p>
 <p id="demo6"></p>
+<p id="demo7"></p>
 <script>
 
 // common js begin
 
-//     ;function commonFunc() {
+//     function commonFunc() {
 //         // window添加message监听
 //     var h5Port;
 //     window.addEventListener('message', function (event) {
@@ -144,29 +146,46 @@
 // common js end
 
 
-    function callArkTS() {
-        let str = HWebHandler.getInfoFromNative("get info");
-        document.getElementById("demo").innerHTML = str;
-        console.info('ArkTS Hello World! :' + str);
+    function camara() {
+        console.info('camara');
+        hebaoWkjs.doCall("checkCameraAuthorization", (res) => {
+            let permission = res.permission
+            console.info(permission);
+            // document.getElementById("demo7").innerHTML = "有相机权限1"
+            if (permission) {
+                document.getElementById("demo7").innerHTML = "有相机权限1"
+            } else {
+                document.getElementById("demo7").innerHTML = "无相机权限"
+            }
+            
+            return "html test success checkCameraAuthorization"
+        })
     }
 
-    function callArkTSA() {
-        let str = HWebHandler.getInfoFromNativeA("get info A");
-        document.getElementById("demo").innerHTML = str;
-        console.info('ArkTS Hello World! :' + str);
-    }
 
-    function callArkTSB() {
-        let str = HWebHandler.doCall("getInfoFromNativeB", '{"str1": "get info B"}')
-        document.getElementById("demo").innerHTML = str;
-        console.info('ArkTS Hello World! :' + str);
-    }
+    // function callArkTS() {
+    //     let str = HWebHandler.getInfoFromNative("get info");
+    //     document.getElementById("demo").innerHTML = str;
+    //     console.info('ArkTS Hello World! :' + str);
+    // }
 
-    function callArkTSC() {
-        let str = HWebHandler.onMessage("getInfoFromNativeC", '{"body":{"params":{"str1": "get info C"}, "callbackId":"getInfoFromNativeC"}}')
-        document.getElementById("demo").innerHTML = str;
-        console.info('ArkTS Hello World! :' + str);
-    }
+    // function callArkTSA() {
+    //     let str = HWebHandler.getInfoFromNativeA("get info A");
+    //     document.getElementById("demo").innerHTML = str;
+    //     console.info('ArkTS Hello World! :' + str);
+    // }
+
+    // function callArkTSB() {
+    //     let str = HWebHandler.doCall("getInfoFromNativeB", '{"str1": "get info B"}')
+    //     document.getElementById("demo").innerHTML = str;
+    //     console.info('ArkTS Hello World! :' + str);
+    // }
+
+    // function callArkTSC() {
+    //     let str = HWebHandler.onMessage("getInfoFromNativeC", '{"body":{"params":{"str1": "get info C"}, "callbackId":"getInfoFromNativeC"}}')
+    //     document.getElementById("demo").innerHTML = str;
+    //     console.info('ArkTS Hello World! :' + str);
+    // }
 
     function callArkTSD() {
         hebaoWkjs.doCall("getInfoFromNativeD", {"str1": "get info D1", "str2": "get info D2"}, (res) => {
@@ -181,52 +200,54 @@
     }
 
     function callArkTSE() {
-        hebaoWkjs.doCall("getInfoFromNativeE", {"str1": "get info E1", "str2": "get info E2"}, (res) => {
+        hebaoWkjs.doCall("getInfoFromNativeE", {str1: "get info E1", str2: "get info E2"}, (res) => {
             let str1 = res.str1
             let str2 = res.str2
             let str = str1 + "--" + str2
             console.info(str);
+            if (str1) {
+            }
             document.getElementById("demo5").innerHTML = str
             return "html test successE"
         })
     }
 
-    function htmlTest() {
-        console.info('JavaScript Hello World! ');
-        document.getElementById("demo1").innerHTML = "javascript";
-        return "html test success"
-    }
+    // function htmlTest() {
+    //     console.info('JavaScript Hello World! ');
+    //     document.getElementById("demo1").innerHTML = "javascript";
+    //     return "html test success"
+    // }
 
-    function htmlTestA(str) {
-        console.info(str);
-        document.getElementById("demo2").innerHTML = str
-        return "html test successA"
-    }
+    // function htmlTestA(str) {
+    //     console.info(str);
+    //     document.getElementById("demo2").innerHTML = str
+    //     return "html test successA"
+    // }
 
-    function htmlTestB(str) {
-        console.info(str);
-        document.getElementById("demo3").innerHTML = str
-        return "html test successB"
-    }
+    // function htmlTestB(str) {
+    //     console.info(str);
+    //     document.getElementById("demo3").innerHTML = str
+    //     return "html test successB"
+    // }
 
-    function htmlTestC(str1, str2, str3) {
-        console.info(str1);
-        console.info(str2);
-        console.info(str3);
-        document.getElementById("demo4").innerHTML = str2 + "--" + str1 + "--" + str3
-        return "html test successC"
-    }
+    // function htmlTestC(str1, str2, str3) {
+    //     console.info(str1);
+    //     console.info(str2);
+    //     console.info(str3);
+    //     document.getElementById("demo4").innerHTML = str2 + "--" + str1 + "--" + str3
+    //     return "html test successC"
+    // }
 
-    function htmlTestD(str) {
-        console.info(str);
-        document.getElementById("demo5").innerHTML = str
-        return "html test successD"
-    }
+    // function htmlTestD(str) {
+    //     console.info(str);
+    //     document.getElementById("demo5").innerHTML = str
+    //     return "html test successD"
+    // }
 
-    function test(str1, params) {
-        console.log(str1)
-        console.log(params)
-    }
+    // function test(str1, params) {
+    //     console.log(str1)
+    //     console.log(params)
+    // }
 
 
 

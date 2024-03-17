@@ -181,6 +181,12 @@ export class HMethods {
     //   return "fromNativeC"
     // })
 
+    this.messageMethods.set("checkCameraAuthorization", (message: HWebMessage) => {
+      let callbackParams: Record<string, Object> = {};
+      callbackParams["permission"] = true;
+      message.hbCallback(callbackParams)
+    });
+
     this.messageMethods.set("getInfoFromNativeD", (message: HWebMessage): string => {
       let params: object = message.params;
       console.log(params["str1"]);
